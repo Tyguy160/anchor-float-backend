@@ -1,0 +1,70 @@
+version: '3.7'
+services:
+  api:
+    build:
+      context: ./backend
+      dockerfile: ./api/Dockerfile
+    depends_on:
+      - database
+      - redis # Not really - but just to be safe
+    restart: unless-stopped
+    ports:
+      - '4000:4000' # Enable access to graphql server from host machine
+    volumes:
+      - /opt/app/node_modules # Use node_modules inside the container
+      - ./backend/package.json:/opt/app/package.json
+      - ./backend/api:/opt/app/api # Mount local `api` source code
+      - ./backend/prisma:/opt/app/prisma
+    command: npm run dev # Defined in backend package.json
+  scan:
+    build:
+      context: ./backend
+      dockerfile: ./scan/Dockerfile
+    depends_on:
+      - database
+      - redis
+    restart: unless-stopped
+    volumes:
+      - /opt/app/node_modules # Use node_modules inside the container
+      - ./backend/package.json:/opt/app/package.json
+      - ./backend/scan:/opt/app/scan # Mount local `scan` source code
+      - ./backend/amazon:/opt/app/amazon # Mount the amazon api files locally
+      - ./backend/prisma:/opt/app/prisma
+    command: npm run devscan # Defined in backend package.json
+  report:
+    build:
+      context: ./backend
+      dockerfile: ./report/Dockerfile
+    depends_on:
+      - database
+      - redis
+    restart: unless-stopped
+    volumes:
+      - /opt/app/node_modules # Use node_modules inside the container
+      - ./backend/package.json:/opt/app/package.json
+      - ./backend/report:/opt/app/report # Mount local `report` source code
+      - ./backend/prisma:/opt/app/prisma
+      - ./backend/report/exports:/opt/app/report/exports
+    command: npm run devreport # Defined in backend package.json
+  database:
+    image: postgres
+    ports:
+      - '5432:5432' # Enable connection to db from host machine
+  redis:
+    image: redis
+    ports:
+      - '6379:6379' # Connect with cli: `docker run -it --network="host" --rm redis redis-cli`
+  client:
+    build:
+      context: ./frontend
+      dockerfile: ./Dockerfile
+    environment:
+      - DOCKERIZED=1
+    restart: unless-stopped
+    ports:
+      - '3000:3000' # Expose web app on port 3000
+    volumes:
+      - /opt/app/node_modules # Use node_modules inside the container
+      - ./frontend/package.json:/opt/app/package.json
+      - ./frontend:/opt/app
+    command: npm run dev # Defined in package.json
