@@ -53,18 +53,4 @@ services:
   redis:
     image: redis
     ports:
-      - '6379:6379' # Connect with cli: `docker run -it --network="host" --rm redis redis-cli`
-  client:
-    build:
-      context: ./frontend
-      dockerfile: ./Dockerfile
-    environment:
-      - DOCKERIZED=1
-    restart: unless-stopped
-    ports:
-      - '3000:3000' # Expose web app on port 3000
-    volumes:
-      - /opt/app/node_modules # Use node_modules inside the container
-      - ./frontend/package.json:/opt/app/package.json
-      - ./frontend:/opt/app
-    command: npm run dev # Defined in package.json
+      - '6379:6379' # Connect with cli: `docker run -it --network="host" --rm redis redis-cli`s
