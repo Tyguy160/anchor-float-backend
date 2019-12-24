@@ -2,7 +2,7 @@ version: '3.7'
 services:
   api:
     build:
-      context: ./backend
+      context: ./
       dockerfile: ./api/Dockerfile
     depends_on:
       - database
@@ -12,13 +12,13 @@ services:
       - '4000:4000' # Enable access to graphql server from host machine
     volumes:
       - /opt/app/node_modules # Use node_modules inside the container
-      - ./backend/package.json:/opt/app/package.json
-      - ./backend/api:/opt/app/api # Mount local `api` source code
-      - ./backend/prisma:/opt/app/prisma
+      - ./package.json:/opt/app/package.json
+      - ./api:/opt/app/api # Mount local `api` source code
+      - ./prisma:/opt/app/prisma
     command: npm run dev # Defined in backend package.json
   scan:
     build:
-      context: ./backend
+      context: ./
       dockerfile: ./scan/Dockerfile
     depends_on:
       - database
@@ -26,14 +26,14 @@ services:
     restart: unless-stopped
     volumes:
       - /opt/app/node_modules # Use node_modules inside the container
-      - ./backend/package.json:/opt/app/package.json
-      - ./backend/scan:/opt/app/scan # Mount local `scan` source code
-      - ./backend/amazon:/opt/app/amazon # Mount the amazon api files locally
-      - ./backend/prisma:/opt/app/prisma
+      - ./package.json:/opt/app/package.json
+      - ./scan:/opt/app/scan # Mount local `scan` source code
+      - ./amazon:/opt/app/amazon # Mount the amazon api files locally
+      - ./prisma:/opt/app/prisma
     command: npm run devscan # Defined in backend package.json
   report:
     build:
-      context: ./backend
+      context: ./
       dockerfile: ./report/Dockerfile
     depends_on:
       - database
@@ -41,10 +41,10 @@ services:
     restart: unless-stopped
     volumes:
       - /opt/app/node_modules # Use node_modules inside the container
-      - ./backend/package.json:/opt/app/package.json
-      - ./backend/report:/opt/app/report # Mount local `report` source code
-      - ./backend/prisma:/opt/app/prisma
-      - ./backend/report/exports:/opt/app/report/exports
+      - ./package.json:/opt/app/package.json
+      - ./report:/opt/app/report # Mount local `report` source code
+      - ./prisma:/opt/app/prisma
+      - ./report/exports:/opt/app/report/exports
     command: npm run devreport # Defined in backend package.json
   database:
     image: postgres
