@@ -9,7 +9,7 @@ generator photon {
 }
 
 model User {
-  id                   String     @default(cuid()) @id @unique
+  id                   String     @default(cuid()) @id
   createdAt            DateTime   @default(now())
   updatedAt            DateTime   @updatedAt
   email                String     @unique
@@ -26,7 +26,7 @@ model User {
 }
 
 model Plan {
-  id              String   @default(cuid()) @id @unique
+  id              String   @default(cuid()) @id
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   name            String?  @unique
@@ -38,7 +38,7 @@ model Plan {
 }
 
 model UserSite {
-  id               String   @default(cuid()) @id @unique
+  id               String   @default(cuid()) @id
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   associatesApiKey String?
@@ -51,7 +51,7 @@ model UserSite {
 }
 
 model Site {
-  id         String     @default(cuid()) @id @unique
+  id         String     @default(cuid()) @id
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
   hostname   String     @unique
@@ -61,7 +61,7 @@ model Site {
 }
 
 model Page {
-  id        String   @default(cuid()) @id @unique
+  id        String   @default(cuid()) @id
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   url       String   @unique
@@ -72,7 +72,7 @@ model Page {
 }
 
 model Link {
-  id               String   @default(cuid()) @id @unique
+  id               String   @default(cuid()) @id
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
   page             Page
@@ -84,7 +84,7 @@ model Link {
 }
 
 model Product {
-  id           String        @default(cuid()) @id @unique
+  id           String        @default(cuid()) @id
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
   name         String?
@@ -94,7 +94,7 @@ model Product {
 }
 
 model Report {
-  id        String   @default(cuid()) @id @unique
+  id        String   @default(cuid()) @id
   createdAt DateTime @default(now())
   fileUrl   String?  @unique
   domain    String
