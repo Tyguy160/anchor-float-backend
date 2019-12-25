@@ -2,22 +2,24 @@
 
 # build with `docker build -f ./backend/prisma/Dockerfile -t dbmigrateandseed ./backend` from the root project dir
 # run with `docker run -it --rm --network=associate-engine_default dbmigrateandseed`
-# the network will only work if docker-compose is full up and running
-
+# the network will only work if docker-compose is fully up and running
 FROM node:10-buster
 
-WORKDIR /opt/app
+RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 
-# docker-compose defines the context as ./backend
-COPY ./package.json ./
+WORKDIR /home/node/app
 
-RUN npm i
+COPY package*.json ./
 
-COPY ./prisma/schema.prisma ./prisma/
+USER node
+
+RUN npm install
+
+COPY --chown=node:node ./prisma/schema.prisma ./prisma/
 
 RUN ./node_modules/.bin/prisma2 generate
 
-COPY . .
+COPY --chown=node:node . .
 
 # Run the app with node
 CMD [ "sh", "-c", "./node_modules/.bin/prisma2 lift save --name initmigration && ./node_modules/.bin/prisma2 lift up && node ./prisma/seed.js" ]
