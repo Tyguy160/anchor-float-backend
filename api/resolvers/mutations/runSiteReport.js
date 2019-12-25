@@ -42,9 +42,9 @@ async function runSiteReport(parent, { input: { hostname } }, { user, db }) {
         }),
       },
     ],
-    err => {
+    (err) => {
       if (err) console.log(err);
-    }
+    },
   );
 
   // Get the list of all of the user's userSites, including sites
@@ -54,7 +54,7 @@ async function runSiteReport(parent, { input: { hostname } }, { user, db }) {
 
   // Find the userSite that matches the selected hostname
   const userSite = userSites.find(
-    userSite => userSite.site.hostname === hostname
+    s => s.site.hostname === hostname,
   );
 
   // Set the flag for running report to true
