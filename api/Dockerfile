@@ -1,20 +1,19 @@
 FROM node:10-buster
 
-WORKDIR /opt/app
+RUN mkdir -p /home/node/app/node_modules && chown -R node:node /home/node/app
 
-# docker-compose defines the context as ./backend
-COPY ./package.json ./
+WORKDIR /home/node/app
 
-RUN npm i
-
-# Add the schema so that prisma2 generate works
-COPY ./prisma/schema.prisma ./prisma/
-
-RUN ./node_modules/.bin/prisma2 generate
-
-COPY . .
+COPY package*.json ./
 
 USER node
 
-# Run the app with node
+RUN npm install
+
+COPY --chown=node:node ./prisma/schema.prisma ./prisma/
+
+RUN ./node_modules/.bin/prisma2 generate
+
+COPY --chown=node:node . .
+
 CMD [ "node", "./api/index.js" ]
