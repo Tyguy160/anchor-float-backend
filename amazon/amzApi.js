@@ -4,11 +4,11 @@ function createRequestFromAsins(asins) {
   const configuredRequest = new ProductAdvertisingAPIv1.GetItemsRequest();
 
   configuredRequest.PartnerTag = process.env.AMAZON_ASSOCIATES_PARTNER_TAG;
-  configuredRequest.PartnerType = process.env.AMAZON_ASSOCIATES_PARTNER_TYPE;
+  configuredRequest.PartnerType = 'Associates';
 
   configuredRequest.ItemIds = asins; // Items to request as an array of ASINs
 
-  configuredRequest.Condition = process.env.AMAZON_ASSOCIATES_ITEM_CONDITION;
+  configuredRequest.Condition = 'New';
 
   configuredRequest.Resources = [
     'CustomerReviews.Count',
@@ -34,11 +34,11 @@ function createVariationsRequestFromAsin(asin) {
   const configuredRequest = new ProductAdvertisingAPIv1.GetVariationsRequest();
 
   configuredRequest.PartnerTag = process.env.AMAZON_ASSOCIATES_PARTNER_TAG;
-  configuredRequest.PartnerType = process.env.AMAZON_ASSOCIATES_PARTNER_TYPE;
+  configuredRequest.PartnerType = 'Associates';
 
   configuredRequest.ASIN = asin; // Items to request as an array of ASINs
 
-  configuredRequest.Condition = process.env.AMAZON_ASSOCIATES_ITEM_CONDITION;
+  configuredRequest.Condition = 'New';
 
   configuredRequest.Resources = [
     'CustomerReviews.Count',
@@ -88,14 +88,14 @@ async function getItemsPromise(apiRequest) {
       }
 
       const errors = data.Errors
-        ? data.Errors.map(amazonError => {
-            const { Code: code } = amazonError;
-            const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1];
-            return {
-              asin,
-              code,
-            };
-          })
+        ? data.Errors.map((amazonError) => {
+          const { Code: code } = amazonError;
+          const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1];
+          return {
+            asin,
+            code,
+          };
+        })
         : null;
 
       return resolve({ items, errors });
