@@ -25,11 +25,16 @@ app.use(bodyParser.json());
 app.post('/stripe-checkout', handleWebhook);
 
 createServer().then((server) => {
+  if (!process.env.FRONTEND_URL) {
+    console.error('\nMissing FRONTEND_URL environment variable. Exiting...\n'); // eslint-disable-line no-console
+    process.exit(1);
+  }
+
   server.applyMiddleware({
     app,
     path: '/graphql',
     cors: {
-      origin: 'http://localhost:3000',
+      origin: process.env.FRONTEND_URL, // frontend origin
       credentials: true,
     },
   });
