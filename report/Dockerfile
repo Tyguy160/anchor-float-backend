@@ -12,8 +12,10 @@ RUN npm install
 
 COPY --chown=node:node ./prisma/schema.prisma ./prisma/
 
+COPY --chown=node:node ./.env ./
+
 RUN ./node_modules/.bin/prisma2 generate
 
 COPY --chown=node:node . .
 
-CMD [ "node ", "./report/index.js" ]
+CMD [ "node", "./report/index.js" ]
