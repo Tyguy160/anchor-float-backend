@@ -5,6 +5,7 @@ dotenv.config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const url = require('url');
 
 const { handleWebhook } = require('./webhook/handleWebhook');
 
@@ -49,7 +50,7 @@ createServer().then((server) => {
     { port: process.env.BACKEND_PORT },
     // eslint-disable-next-line no-console
     () => console.info(
-      `🚀 Server ready: http://localhost:${process.env.BACKEND_PORT}${server.graphqlPath}`,
+      `🚀 Server ready: http://${url.parse(process.env.FRONTEND_URL).hostname}:${process.env.BACKEND_PORT}${server.graphqlPath}`,
     ),
   );
 });
