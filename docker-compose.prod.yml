@@ -1,7 +1,15 @@
 version: '3.7'
 services:
   proxy:
-    image: nginx
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
+    depends_on:
+      - api
+    restart: always
+    ports:
+      - '80:80'
+      - '443:443'
   api:
     build:
       context: ./
