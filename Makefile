@@ -2,6 +2,10 @@ up:
 	docker-compose up --build
 down:
 	docker-compose down -v
+prod-up:
+	docker-compose -f docker-compose.prod.yml up --build
+prod-down:
+	docker-compose -f docker-compose.prod.yml down -v
 redis-connect:
 	docker run -it --network="host" --rm redis redis-cli
 docker-clean:
