@@ -3,7 +3,7 @@ up:
 down:
 	docker-compose down -v
 prod-up:
-	docker-compose -d -f docker-compose.prod.yml up --build
+	docker-compose -f docker-compose.prod.yml up --build -d
 prod-down:
 	docker-compose -f docker-compose.prod.yml down -v
 redis-connect:
