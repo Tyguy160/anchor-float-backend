@@ -1,12 +1,24 @@
 const nodemailer = require('nodemailer');
-
+const mg = require('nodemailer-mailgun-transport');
 const {
   MAIL_HOST,
   MAIL_PORT,
   MAIL_USER,
   MAIL_PASS,
+  MG_API_KEY,
+  MG_DOMAIN,
 } = process.env;
 
+const auth = {
+  auth: {
+    api_key: MG_API_KEY,
+    domain: MG_DOMAIN,
+  },
+};
+
+const transport = nodemailer.createTransport(mg(auth));
+
+// TODO: Delete code below this line
 
 Object.entries({
   MAIL_HOST,
@@ -14,20 +26,21 @@ Object.entries({
   MAIL_USER,
   MAIL_PASS,
 }).forEach(([varName, varValue]) => {
-  if (!varValue) { // value is undefined
+  if (!varValue) {
+    // value is undefined
     console.error(`\nMissing required environment variable: ${varName}\n`); // eslint-disable-line no-console
     process.exit(1);
   }
 });
 
-const transport = nodemailer.createTransport({
-  host: MAIL_HOST,
-  port: MAIL_PORT,
-  auth: {
-    user: MAIL_USER,
-    pass: MAIL_PASS,
-  },
-});
+// const transport = nodemailer.createTransport({
+//   host: MAIL_HOST,
+//   port: MAIL_PORT,
+//   auth: {
+//     user: MAIL_USER,
+//     pass: MAIL_PASS,
+//   },
+// });
 
 const emailTemplate = text => `
 <div className="email" style="
