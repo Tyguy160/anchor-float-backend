@@ -1,3 +1,4 @@
+require('dotenv').config();
 const { getDB } = require('./db');
 
 const plansToAdd = [
@@ -42,7 +43,7 @@ const db = getDB();
 
 db.connect()
   .then(() => {
-    plansToAdd.forEach(plan => {
+    plansToAdd.forEach((plan) => {
       console.log(plan);
       db.plans
         .create({
@@ -58,12 +59,11 @@ db.connect()
     });
 
     setTimeout(
-      () =>
-        db.plans.findMany().then(plans => {
-          console.log(plans);
-          process.exit(0);
-        }),
-      3000
+      () => db.plans.findMany().then((plans) => {
+        console.log(plans);
+        process.exit(0);
+      }),
+      3000,
     );
   })
   .catch(console.err);

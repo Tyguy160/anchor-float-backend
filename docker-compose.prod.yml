@@ -1,0 +1,36 @@
+version: '3.7'
+services:
+  api:
+    build:
+      context: ./
+      dockerfile: ./api/Dockerfile
+    depends_on:
+      - redis
+    restart: unless-stopped
+    ports:
+      - '4000:4000' # Enable access to graphql server from host machine
+    volumes:
+      - /opt/app/node_modules # Use node_modules inside the container
+  scan:
+    build:
+      context: ./
+      dockerfile: ./scan/Dockerfile
+    depends_on:
+      - redis
+    restart: unless-stopped
+    volumes:
+      - /opt/app/node_modules # Use node_modules inside the container
+  report:
+    build:
+      context: ./
+      dockerfile: ./report/Dockerfile
+    depends_on:
+      - redis
+    restart: unless-stopped
+    volumes:
+      - /opt/app/node_modules # Use node_modules inside the container
+  redis:
+    image: redis
+    ports:
+      - '6379:6379'
+    restart: unless-stopped

@@ -5,6 +5,7 @@ dotenv.config();
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const bodyParser = require('body-parser');
+const url = require('url');
 
 const { handleWebhook } = require('./webhook/handleWebhook');
 
@@ -25,11 +26,16 @@ app.use(bodyParser.json());
 app.post('/stripe-checkout', handleWebhook);
 
 createServer().then((server) => {
+  if (!process.env.FRONTEND_URL) {
+    console.error('\nMissing FRONTEND_URL environment variable. Exiting...\n'); // eslint-disable-line no-console
+    process.exit(1);
+  }
+
   server.applyMiddleware({
     app,
     path: '/graphql',
     cors: {
-      origin: 'http://localhost:3000',
+      origin: process.env.FRONTEND_URL, // frontend origin
       credentials: true,
     },
   });
@@ -44,7 +50,7 @@ createServer().then((server) => {
     { port: process.env.BACKEND_PORT },
     // eslint-disable-next-line no-console
     () => console.info(
-      `🚀 Server ready: http://localhost:${process.env.BACKEND_PORT}${server.graphqlPath}`,
+      `🚀 Server ready: http://${url.parse(process.env.FRONTEND_URL).hostname}:${process.env.BACKEND_PORT}${server.graphqlPath}`,
     ),
   );
 });

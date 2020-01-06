@@ -21,8 +21,6 @@ const {
   AWS_ACCESS_KEY_ID,
   AWS_REGION,
   AMAZON_ASSOCIATES_PARTNER_TAG,
-  AMAZON_ASSOCIATES_PARTNER_TYPE,
-  AMAZON_ASSOCIATES_ITEM_CONDITION,
   AMAZON_ASSOCIATES_ACCESS_KEY,
   AMAZON_ASSOCIATES_SECRET_KEY,
   AMAZON_ASSOCIATES_HOST,
@@ -41,8 +39,6 @@ Object.entries({
   AWS_ACCESS_KEY_ID,
   AWS_REGION,
   AMAZON_ASSOCIATES_PARTNER_TAG,
-  AMAZON_ASSOCIATES_PARTNER_TYPE,
-  AMAZON_ASSOCIATES_ITEM_CONDITION,
   AMAZON_ASSOCIATES_ACCESS_KEY,
   AMAZON_ASSOCIATES_SECRET_KEY,
   AMAZON_ASSOCIATES_HOST,
@@ -59,21 +55,21 @@ try {
   const parseSitemapConsumer = Consumer.create({
     queueUrl: PARSE_SITEMAP_QUEUE_URL,
     handleMessage: parseSitemapHandler,
-  }).on('error', err => {
+  }).on('error', (err) => {
     console.error(err.message); // eslint-disable-line no-console
   });
 
   const parsePageConsumer = Consumer.create({
     queueUrl: PARSE_PAGE_QUEUE_URL,
     handleMessage: parsePageHandler,
-  }).on('error', err => {
+  }).on('error', (err) => {
     console.error(err.message); // eslint-disable-line no-console
   });
 
   const createAndConnectProductConsumer = Consumer.create({
     queueUrl: CREATE_CONNECT_PRODUCT_QUEUE_URL,
     handleMessage: createAndConnectProductHandler,
-  }).on('error', err => {
+  }).on('error', (err) => {
     console.error(err.message); // eslint-disable-line no-console
   });
 
@@ -82,21 +78,21 @@ try {
     handleMessageBatch: parseProductHandler,
     batchSize: 10,
     pollingWaitTimeMs: 10000, // 10 second wait between requests
-  }).on('error', err => {
+  }).on('error', (err) => {
     console.error(err.message); // eslint-disable-line no-console
   });
 
   const parseVariationsConsumer = Consumer.create({
     queueUrl: PARSE_VARIATIONS_QUEUE_URL,
     handleMessage: parseVariationsHandler,
-  }).on('error', err => {
+  }).on('error', (err) => {
     console.error(err.message); // eslint-disable-line no-console
   });
 
   const parseShortlinkConsumer = Consumer.create({
     queueUrl: PARSE_SHORTLINK_QUEUE_URL,
     handleMessage: parseShortlinkHandler,
-  }).on('error', err => {
+  }).on('error', (err) => {
     console.error(err.message); // eslint-disable-line no-console
   });
 

@@ -1,3 +1,7 @@
+const dotenv = require('dotenv');
+
+dotenv.config();
+
 const stripe = require('../../stripe');
 
 const { SIGN_IN_REQUIRED, EMAIL_NOT_FOUND } = require('../../errors');
@@ -31,9 +35,8 @@ async function createStripeSession(parent, { input }, { user, db }) {
         },
       ],
     },
-    success_url:
-      'http://localhost:3000/success?session_id={CHECKOUT_SESSION_ID}',
-    cancel_url: 'http://localhost:3000/cancel',
+    success_url: `${process.env.FRONTEND_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.FRONTEND_URL}/cancel`,
     client_reference_id: user.userId,
   };
 
