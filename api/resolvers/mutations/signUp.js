@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 
 const { getUserTokenFromId } = require('../../user');
+const { transport, emailTemplate } = require('../../mail');
 const { EMAIL_TAKEN } = require('../../errors');
 
 async function signUp(parent, { input }, context) {
@@ -33,7 +34,10 @@ async function signUp(parent, { input }, context) {
 
   // Send a welcome email
   await transport.sendMail({
-    from: 'accounts@anchorfloat.com',
+    from: {
+      name: 'Anchor Float',
+      address: 'accounts@anchorfloat.com',
+    },
     to: user.email,
     subject: 'Welcome to Anchor Float',
     html: emailTemplate(
