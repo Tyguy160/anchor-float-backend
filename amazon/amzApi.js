@@ -1,3 +1,4 @@
+const fs = require('fs');
 const ProductAdvertisingAPIv1 = require('./src/index');
 
 function createRequestFromAsins(asins) {
@@ -77,6 +78,12 @@ async function getItemsPromise(apiRequest) {
         return reject(error);
       }
 
+      if (data) {
+        fs.appendFile('responses.txt', JSON.stringify(data, null, 2), err => {
+          console.log(err);
+        });
+      }
+
       let items = null;
       if (data.ItemsResult && data.ItemsResult.Items) {
         items = data.ItemsResult.Items.map(item => ({
@@ -88,14 +95,14 @@ async function getItemsPromise(apiRequest) {
       }
 
       const errors = data.Errors
-        ? data.Errors.map((amazonError) => {
-          const { Code: code } = amazonError;
-          const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1];
-          return {
-            asin,
-            code,
-          };
-        })
+        ? data.Errors.map(amazonError => {
+            const { Code: code } = amazonError;
+            const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1];
+            return {
+              asin,
+              code,
+            };
+          })
         : null;
 
       return resolve({ items, errors });

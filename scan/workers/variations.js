@@ -32,10 +32,10 @@ async function parseVariationsHandler({ Body }) {
   console.log(errors);
   let availability;
   if (errors && errors[0].Code === 'NoResults') {
-    console.log('Unavail due to no results');
+    console.log('Unavailable due to no results');
     availability = 'UNAVAILABLE';
   } else if (errors) {
-    console.log('Throwing because errors');
+    console.log('Throwing because errors in API response');
     throw Error('Error in API response');
   }
 
@@ -49,10 +49,15 @@ async function parseVariationsHandler({ Body }) {
           IsFreeShippingEligible,
           IsPrimeEligible,
         } = variationDeliveryInfo;
+
+        console.log(variationDeliveryInfo);
+
+        return IsAmazonFulfilled || IsFreeShippingEligible || IsPrimeEligible;
       })
     );
 
     availability = varAvailable ? 'AMAZON' : 'UNAVAILABLE';
+    // availability = 'UNAVAILABLE';
   }
 
   // Does the product exist?
