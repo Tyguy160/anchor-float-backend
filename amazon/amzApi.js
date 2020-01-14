@@ -79,7 +79,8 @@ async function getItemsPromise(apiRequest) {
       }
 
       if (data) {
-        fs.appendFile('logs/getItemsResponses.txt', `${JSON.stringify(data, null, 2)}\n`, (err) => {
+        const logData = { requestDetails: apiRequest, ...data };
+        fs.appendFile('logs/getItemsResponses.txt', `${JSON.stringify(logData, null, 2)}\n`, (err) => {
           if (err) {
             console.log(err);
           }
@@ -130,7 +131,8 @@ async function getVariationReq(apiRequest) {
       }
 
       if (data) {
-        fs.appendFile('logs/getVariationsResponses.txt', `${JSON.stringify(data, null, 2)}\n`, (err) => {
+        const logData = { requestDetails: apiRequest, ...data };
+        fs.appendFile('logs/getVariationsResponses.txt', `${JSON.stringify(logData, null, 2)}\n`, (err) => {
           if (err) {
             console.log(err);
           }
