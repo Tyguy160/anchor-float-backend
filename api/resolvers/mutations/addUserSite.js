@@ -8,7 +8,7 @@ const { getRootSitemap } = require('../../utils/getSitemap');
 async function addUserSite(
   parent,
   { input: { hostname, apiKey, minimumReview } },
-  { user, db }
+  { user, db },
 ) {
   if (!user) {
     throw new Error(SIGN_IN_REQUIRED);

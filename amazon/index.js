@@ -7,7 +7,7 @@ const {
   getVariationReq,
 } = require('./amzApi');
 
-const asins = ['B081B8MV8M'];
+const asins = ['B07GY2K4ND', 'B081B8MV8M', 'B07RF1XD36'];
 
 async function main() {
   const requestUrl = createRequestFromAsins(asins);
@@ -15,49 +15,22 @@ async function main() {
   try {
     apiResp = await getItemsPromise(requestUrl);
   } catch (err) {
-    console.log(err);
+    console.log(`getItems Errors:\n${err}`);
   }
 
-  console.log('getItems results:');
+  console.log('getItems Results:');
   console.log(JSON.stringify(apiResp, null, 1));
 
   const variationReq = createVariationsRequestFromAsin(asins[0]);
   let varRes;
   try {
     varRes = await getVariationReq(variationReq);
-    const { items, errors } = varRes;
+    const { items } = varRes;
     console.log('getVariations results:');
     console.log(JSON.stringify(items, null, 1));
   } catch (err) {
-    console.log(err);
+    console.log(`getVariations Errors:\n${err}`);
   }
-
-  // const { items, errors } = apiResp;
-
-  // if (items) {
-  //   items.forEach(async (item) => {
-  //     const { offers, name, asin } = item;
-
-  //     // If the product doesn't exist yet, we're going to create it
-  //     let availability;
-
-  //     if (offers) {
-  //       const {
-  //         IsAmazonFulfilled,
-  //         IsFreeShippingEligible,
-  //         IsPrimeEligible,
-  //       } = offers[0].DeliveryInfo;
-  //       if (IsAmazonFulfilled || IsFreeShippingEligible || IsPrimeEligible) {
-  //         availability = 'AMAZON'; // HIGH-CONV
-  //       } else {
-  //         availability = 'THIRDPARTY'; // LOW-CONV
-  //       }
-  //     } else {
-  //       availability = 'UNAVAILABLE';
-  //     }
-  //     console.log(`Availability: ${availability}`);
-  //   });
-  // }
 }
 
 main();

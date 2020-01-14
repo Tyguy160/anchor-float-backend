@@ -37,7 +37,7 @@ function createVariationsRequestFromAsin(asin) {
   configuredRequest.PartnerTag = process.env.AMAZON_ASSOCIATES_PARTNER_TAG;
   configuredRequest.PartnerType = 'Associates';
 
-  configuredRequest.ASIN = asin; // Items to request as an array of ASINs
+  configuredRequest.ASIN = asin; // Single ASIN to request
 
   configuredRequest.Condition = 'New';
 
@@ -79,8 +79,10 @@ async function getItemsPromise(apiRequest) {
       }
 
       if (data) {
-        fs.appendFile('responses.txt', JSON.stringify(data, null, 2), err => {
-          console.log(err);
+        fs.appendFile('getItemsResponses.txt', `${JSON.stringify(data, null, 2)}\n`, (err) => {
+          if (err) {
+            console.log(err);
+          }
         });
       }
 
@@ -95,14 +97,14 @@ async function getItemsPromise(apiRequest) {
       }
 
       const errors = data.Errors
-        ? data.Errors.map(amazonError => {
-            const { Code: code } = amazonError;
-            const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1];
-            return {
-              asin,
-              code,
-            };
-          })
+        ? data.Errors.map((amazonError) => {
+          const { Code: code } = amazonError;
+          const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1];
+          return {
+            asin,
+            code,
+          };
+        })
         : null;
 
       return resolve({ items, errors });
@@ -126,6 +128,15 @@ async function getVariationReq(apiRequest) {
         // Usually a 429 error (too many requests)
         return reject(error);
       }
+
+      if (data) {
+        fs.appendFile('getVariationsResponses.txt', `${JSON.stringify(data, null, 2)}\n`, (err) => {
+          if (err) {
+            console.log(err);
+          }
+        });
+      }
+
       let items = null;
       if (data.VariationsResult && data.VariationsResult.Items) {
         items = data.VariationsResult.Items.map(item => ({
