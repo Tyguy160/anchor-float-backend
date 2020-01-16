@@ -5,8 +5,6 @@ const { getDataFromMessage } = require('./utils');
 const {
   createRequestFromAsins,
   getItemsPromise,
-  createVariationsRequestFromAsin,
-  getVariationReq,
 } = require('../../amazon/amzApi');
 const progress = require('../../progress/index');
 const productCache = require('../productCache');
@@ -61,8 +59,10 @@ async function parseProductHandler(messages) {
   const { items, errors } = apiResponse;
 
   if (items) {
-    items.forEach(async item => {
-      const { offers, name, asin, parentAsin } = item;
+    items.forEach(async (item) => {
+      const {
+        offers, name, asin, parentAsin,
+      } = item;
 
       // The asin IS A PARENT if it does not have a value for parentAsin
       if (parentAsin === null) {
@@ -80,9 +80,9 @@ async function parseProductHandler(messages) {
               }),
             },
           ],
-          producerError => {
+          (producerError) => {
             if (producerError) console.log(producerError);
-          }
+          },
         );
 
         progress.variationsFetchAdded({
@@ -92,7 +92,7 @@ async function parseProductHandler(messages) {
 
         const tasksForProduct = asinToMessageDataMap[asin];
         if (tasksForProduct.length > 0) {
-          tasksForProduct.forEach(async task => {
+          tasksForProduct.forEach(async (task) => {
             progress.productFetchCompleted({
               jobId: task.jobId,
               taskId: task.taskId,
@@ -128,7 +128,7 @@ async function parseProductHandler(messages) {
 
       if (!existingProduct) {
         console.log(
-          `ERR: Product ${asin} should already exist in DB but was not found`
+          `ERR: Product ${asin} should already exist in DB but was not found`,
         );
         return;
       }
@@ -148,7 +148,7 @@ async function parseProductHandler(messages) {
       const tasksForProduct = asinToMessageDataMap[asin];
 
       if (tasksForProduct.length > 0) {
-        tasksForProduct.forEach(async task => {
+        tasksForProduct.forEach(async (task) => {
           progress.productFetchCompleted({
             jobId: task.jobId,
             taskId: task.taskId,
@@ -160,7 +160,7 @@ async function parseProductHandler(messages) {
 
   if (errors) {
     // Usually items no longer sold
-    errors.forEach(async err => {
+    errors.forEach(async (err) => {
       // Update items as unavailable
       const { asin } = err;
 
@@ -174,7 +174,7 @@ async function parseProductHandler(messages) {
 
       if (!existingProduct) {
         console.log(
-          `ERR: Product ${asin} should already exist in DB but was not found`
+          `ERR: Product ${asin} should already exist in DB but was not found`,
         );
         return;
       }
@@ -188,7 +188,7 @@ async function parseProductHandler(messages) {
       const tasksForProduct = asinToMessageDataMap[asin];
 
       if (tasksForProduct.length > 0) {
-        tasksForProduct.forEach(async task => {
+        tasksForProduct.forEach(async (task) => {
           progress.productFetchCompleted({
             jobId: task.jobId,
             taskId: task.taskId,
