@@ -6,7 +6,6 @@ const {
 } = require('../../amazon/amzApi');
 const progress = require('../../progress/index');
 const productCache = require('../productCache');
-const { variationsProducer } = require('../producers');
 
 const db = getDB();
 
@@ -42,19 +41,16 @@ async function parseVariationsHandler({ Body }) {
   if (!items || !items.length) {
     availability = 'UNAVAILABLE';
   } else {
-    const varAvailable = items.some(({ offers: variationOffers }) =>
-      variationOffers.some(({ DeliveryInfo: variationDeliveryInfo }) => {
-        const {
-          IsAmazonFulfilled,
-          IsFreeShippingEligible,
-          IsPrimeEligible,
-        } = variationDeliveryInfo;
+    // eslint-disable-next-line max-len
+    const varAvailable = items.some(({ offers: variationOffers }) => variationOffers.some(({ DeliveryInfo: variationDeliveryInfo }) => {
+      const {
+        IsAmazonFulfilled,
+        IsFreeShippingEligible,
+        IsPrimeEligible,
+      } = variationDeliveryInfo;
 
-        console.log(variationDeliveryInfo);
-
-        return IsAmazonFulfilled || IsFreeShippingEligible || IsPrimeEligible;
-      })
-    );
+      return IsAmazonFulfilled || IsFreeShippingEligible || IsPrimeEligible;
+    }));
 
     availability = varAvailable ? 'AMAZON' : 'UNAVAILABLE';
     // availability = 'UNAVAILABLE';
@@ -69,7 +65,7 @@ async function parseVariationsHandler({ Body }) {
 
   if (!existingProduct) {
     console.log(
-      `ERR: Product ${asin} should already exist in DB but was not found`
+      `ERR: Product ${asin} should already exist in DB but was not found`,
     );
     return;
   }
