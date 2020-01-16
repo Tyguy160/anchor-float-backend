@@ -12,9 +12,6 @@ function createRequestFromAsins(asins) {
   configuredRequest.Condition = 'New';
 
   configuredRequest.Resources = [
-    'CustomerReviews.Count',
-    'CustomerReviews.StarRating',
-    'Images.Primary.Medium',
     'ItemInfo.Title',
     'Offers.Listings.Availability.Message',
     'Offers.Listings.Availability.Type',
@@ -22,8 +19,6 @@ function createRequestFromAsins(asins) {
     'Offers.Listings.DeliveryInfo.IsAmazonFulfilled',
     'Offers.Listings.DeliveryInfo.IsFreeShippingEligible',
     'Offers.Listings.DeliveryInfo.IsPrimeEligible',
-    'Offers.Listings.IsBuyBoxWinner',
-    'Offers.Listings.Price',
     'Offers.Summaries.OfferCount',
     'ParentASIN',
   ];
@@ -42,9 +37,6 @@ function createVariationsRequestFromAsin(asin) {
   configuredRequest.Condition = 'New';
 
   configuredRequest.Resources = [
-    'CustomerReviews.Count',
-    'CustomerReviews.StarRating',
-    'Images.Primary.Medium',
     'ItemInfo.Title',
     'Offers.Listings.Availability.Message',
     'Offers.Listings.Availability.Type',
@@ -52,8 +44,6 @@ function createVariationsRequestFromAsin(asin) {
     'Offers.Listings.DeliveryInfo.IsAmazonFulfilled',
     'Offers.Listings.DeliveryInfo.IsFreeShippingEligible',
     'Offers.Listings.DeliveryInfo.IsPrimeEligible',
-    'Offers.Listings.IsBuyBoxWinner',
-    'Offers.Listings.Price',
     'Offers.Summaries.OfferCount',
     'ParentASIN',
   ];
