@@ -59,10 +59,38 @@ async function parseProductHandler(messages) {
   const { items, errors } = apiResponse;
 
   if (items) {
-    items.forEach(async (item) => {
-      const {
-        offers, name, asin, parentAsin,
-      } = item;
+    items.forEach(async item => {
+      const { offers, name, asin, parentAsin } = item;
+
+      // look at offers first for delivery info
+      let availability;
+      if (offers) {
+        const {
+          IsAmazonFulfilled,
+          IsFreeShippingEligible,
+          IsPrimeEligible,
+        } = offers[0].DeliveryInfo;
+
+        // If any of the following conditions are true,
+        // the product will be marked as available through Amazon
+        if (IsAmazonFulfilled || IsFreeShippingEligible || IsPrimeEligible) {
+          availability = 'AMAZON'; // HIGH-CONV
+        } else if (
+          [IsAmazonFulfilled, IsFreeShippingEligible, IsPrimeEligible].every(
+            info => info === 'false'
+          )
+        ) {
+          // Otherwise, since an offer exists and the conditions aren't met,
+          // the product must be from a 3rd party seller
+          availability = 'THIRDPARTY';
+        }
+        // !FIXME: Look at errors to determine if we can mark as unavailable early
+        // !FIXME: Make database update call here and return early
+        // If we still haven't found the availability, we'll run a variations request
+        else {
+          // !FIXME: Make a variations request
+        }
+      }
 
       // The asin IS A PARENT if it does not have a value for parentAsin
       if (parentAsin === null) {
@@ -80,9 +108,9 @@ async function parseProductHandler(messages) {
               }),
             },
           ],
-          (producerError) => {
+          producerError => {
             if (producerError) console.log(producerError);
-          },
+          }
         );
 
         progress.variationsFetchAdded({
@@ -92,7 +120,7 @@ async function parseProductHandler(messages) {
 
         const tasksForProduct = asinToMessageDataMap[asin];
         if (tasksForProduct.length > 0) {
-          tasksForProduct.forEach(async (task) => {
+          tasksForProduct.forEach(async task => {
             progress.productFetchCompleted({
               jobId: task.jobId,
               taskId: task.taskId,
@@ -119,7 +147,7 @@ async function parseProductHandler(messages) {
         availability = 'UNAVAILABLE';
       }
 
-      // Does the product exist?
+      // Does the product already exist?
       const existingProduct = await db.products.findOne({
         where: {
           asin,
@@ -128,7 +156,7 @@ async function parseProductHandler(messages) {
 
       if (!existingProduct) {
         console.log(
-          `ERR: Product ${asin} should already exist in DB but was not found`,
+          `ERR: Product ${asin} should already exist in DB but was not found`
         );
         return;
       }
@@ -148,7 +176,7 @@ async function parseProductHandler(messages) {
       const tasksForProduct = asinToMessageDataMap[asin];
 
       if (tasksForProduct.length > 0) {
-        tasksForProduct.forEach(async (task) => {
+        tasksForProduct.forEach(async task => {
           progress.productFetchCompleted({
             jobId: task.jobId,
             taskId: task.taskId,
@@ -160,9 +188,9 @@ async function parseProductHandler(messages) {
 
   if (errors) {
     // Usually items no longer sold
-    errors.forEach(async (err) => {
+    errors.forEach(async err => {
       // Update items as unavailable
-      const { asin } = err;
+      const { code, asin } = err;
 
       if (!asin) return;
 
@@ -174,21 +202,22 @@ async function parseProductHandler(messages) {
 
       if (!existingProduct) {
         console.log(
-          `ERR: Product ${asin} should already exist in DB but was not found`,
+          `ERR: Product ${asin} should already exist in DB but was not found`
         );
         return;
       }
 
+      // Mark the product as not found to handle non-product responses (e.g. 404)
       await db.products.update({
         where: { id: existingProduct.id },
-        data: { availability: 'UNAVAILABLE' },
+        data: { availability: 'NOTFOUND' },
       });
       productCache.setProductUpdated(asin);
 
       const tasksForProduct = asinToMessageDataMap[asin];
 
       if (tasksForProduct.length > 0) {
-        tasksForProduct.forEach(async (task) => {
+        tasksForProduct.forEach(async task => {
           progress.productFetchCompleted({
             jobId: task.jobId,
             taskId: task.taskId,
