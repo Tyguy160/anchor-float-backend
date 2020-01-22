@@ -68,19 +68,6 @@ async function getItemsPromise(apiRequest) {
         return reject(error);
       }
 
-      if (data) {
-        const logData = { requestDetails: apiRequest, ...data };
-        fs.appendFile(
-          'logs/getItemsResponses.txt',
-          `${JSON.stringify(logData, null, 2)}\n`,
-          err => {
-            if (err) {
-              console.log(err);
-            }
-          }
-        );
-      }
-
       let items = null;
       if (data.ItemsResult && data.ItemsResult.Items) {
         items = data.ItemsResult.Items.map(item => ({
@@ -99,10 +86,25 @@ async function getItemsPromise(apiRequest) {
             const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1]; // get the ASIN from the error message
             return {
               asin,
-              code,
+              code, // only seen `InvalidParameterValue`
             };
           })
         : null;
+
+      if (errors) {
+        errors.forEach(({ asin: errorAsin, code }) => {
+          items = items.map(item => {
+            if (item.asin === errorAsin) {
+              return {
+                ...item,
+                errors: item.errors.concat(code),
+              };
+            }
+
+            return item;
+          });
+        });
+      }
 
       return resolve({ items, errors });
     });
@@ -126,19 +128,6 @@ async function getVariationReq(apiRequest) {
         return reject(error);
       }
 
-      if (data) {
-        const logData = { requestDetails: apiRequest, ...data };
-        fs.appendFile(
-          'logs/getVariationsResponses.txt',
-          `${JSON.stringify(logData, null, 2)}\n`,
-          err => {
-            if (err) {
-              console.log(err);
-            }
-          }
-        );
-      }
-
       let items = null;
       if (data.VariationsResult && data.VariationsResult.Items) {
         items = data.VariationsResult.Items.map(item => ({
@@ -150,8 +139,6 @@ async function getVariationReq(apiRequest) {
       }
 
       if (data.Errors && data.Errors[0].Code === 'NoResults') {
-        console.log('Variation errors:');
-        console.log(data.Errors);
         return resolve({ items, errors: data.Errors });
       }
 

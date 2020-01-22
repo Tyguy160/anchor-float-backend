@@ -56,176 +56,139 @@ async function parseProductHandler(messages) {
     throw Error('API response error'); // Put all items back into the queue
   }
 
-  const { items, errors } = apiResponse;
+  const { items } = apiResponse;
 
   if (items) {
     items.forEach(async item => {
-      const { offers, name, asin, parentAsin } = item;
+      const { name, asin } = item;
 
-      // look at offers first for delivery info
-      let availability;
-      if (offers) {
-        const {
-          IsAmazonFulfilled,
-          IsFreeShippingEligible,
-          IsPrimeEligible,
-        } = offers[0].DeliveryInfo;
+      const productStatus = getProductStatusFromItemResponse(item); // AMAZON, THIRDPARTY, or NOTFOUND
 
-        // If any of the following conditions are true,
-        // the product will be marked as available through Amazon
-        if (IsAmazonFulfilled || IsFreeShippingEligible || IsPrimeEligible) {
-          availability = 'AMAZON'; // HIGH-CONV
-        } else if (
-          [IsAmazonFulfilled, IsFreeShippingEligible, IsPrimeEligible].every(
-            info => info === 'false'
-          )
-        ) {
-          // Otherwise, since an offer exists and the conditions aren't met,
-          // the product must be from a 3rd party seller
-          availability = 'THIRDPARTY';
-        }
-        // !FIXME: Look at errors to determine if we can mark as unavailable early
-        // !FIXME: Make database update call here and return early
-        // If we still haven't found the availability, we'll run a variations request
-        else {
-          // !FIXME: Make a variations request
-        }
-      }
+      console.log('Product request:')
+      console.log(JSON.stringify({asin, productStatus}, null, 2))
 
-      // The asin IS A PARENT if it does not have a value for parentAsin
-      if (parentAsin === null) {
-        const variationsTaskId = uuid();
-
-        variationsProducer.send(
-          [
-            {
-              id: variationsTaskId,
-              body: JSON.stringify({
-                asin,
-                name,
-                jobId: asinToMessageDataMap[asin][0].jobId,
-                taskId: variationsTaskId,
-              }),
-            },
-          ],
-          producerError => {
-            if (producerError) console.log(producerError);
-          }
-        );
-
-        progress.variationsFetchAdded({
-          jobId: asinToMessageDataMap[asin][0].jobId,
-          taskId: variationsTaskId,
-        });
-
-        const tasksForProduct = asinToMessageDataMap[asin];
-        if (tasksForProduct.length > 0) {
-          tasksForProduct.forEach(async task => {
-            progress.productFetchCompleted({
-              jobId: task.jobId,
-              taskId: task.taskId,
-            });
-          });
-        }
-        return; // return early without doing any DB updates
-      }
-
-      // If it's not a parent asin, do other stuff
-      let availability;
-      if (offers) {
-        const {
-          IsAmazonFulfilled,
-          IsFreeShippingEligible,
-          IsPrimeEligible,
-        } = offers[0].DeliveryInfo;
-        if (IsAmazonFulfilled || IsFreeShippingEligible || IsPrimeEligible) {
-          availability = 'AMAZON'; // HIGH-CONV
-        } else {
-          availability = 'THIRDPARTY'; // LOW-CONV
-        }
-      } else {
-        availability = 'UNAVAILABLE';
-      }
-
-      // Does the product already exist?
-      const existingProduct = await db.products.findOne({
-        where: {
+      if (!productStatus) {
+        // Do variations and early return
+        return createVariationsTask({
           asin,
-        },
-      });
-
-      if (!existingProduct) {
-        console.log(
-          `ERR: Product ${asin} should already exist in DB but was not found`
-        );
-        return;
-      }
-
-      await db.products.update({
-        where: { id: existingProduct.id },
-        data: {
-          asin,
-          availability,
           name,
-        },
-      });
+          jobId: asinToMessageDataMap[asin][0].jobId, // FIXME: we be updating other jobs and not assuming there's only one jobId
+        });
+      }
+
+      try {
+        await updateProductInDB({ asin, availability: productStatus, name });
+      } catch (error) {
+        console.log('Error trying to update DB');
+        console.log(error);
+      }
+
+      const tasksForProduct = asinToMessageDataMap[asin];
+      if (tasksForProduct.length > 0) {
+        tasksForProduct.forEach(async task => {
+          progress.productFetchCompleted({
+            jobId: task.jobId,
+            taskId: task.taskId,
+          });
+        });
+      }
 
       productCache.setProductUpdated(asin);
       productCache.deleteProductQueued(asin);
-
-      const tasksForProduct = asinToMessageDataMap[asin];
-
-      if (tasksForProduct.length > 0) {
-        tasksForProduct.forEach(async task => {
-          progress.productFetchCompleted({
-            jobId: task.jobId,
-            taskId: task.taskId,
-          });
-        });
-      }
     });
   }
+}
 
-  if (errors) {
-    // Usually items no longer sold
-    errors.forEach(async err => {
-      // Update items as unavailable
-      const { code, asin } = err;
+async function updateProductInDB({ asin, availability, name }) {
+  if (!asin) {
+    return Promise.reject({ error: `Must call this function with an ASIN` });
+  }
 
-      if (!asin) return;
+  // Make sure the product exists in the database (it should by now)
+  const existingProduct = await db.products.findOne({
+    where: {
+      asin,
+    },
+  });
 
-      const existingProduct = await db.products.findOne({
-        where: {
+  if (!existingProduct) {
+    return Promise.reject({ error: `Product ${asin} not found in DB` });
+  }
+
+  return db.products.update({
+    where: { id: existingProduct.id },
+    data: {
+      asin,
+      availability,
+      name,
+    },
+  });
+}
+
+function getProductStatusFromItemResponse(itemResponse) {
+  const { offers, errors } = itemResponse;
+
+  if (
+    !offers &&
+    !errors.some(errorCode => errorCode === 'InvalidParameterValue')
+  ) {
+    return null; // we don't have certainty about status yet
+  }
+
+  if (errors.some(errorCode => errorCode === 'InvalidParameterValue')) {
+    return 'NOTFOUND';
+  }
+
+  if (offers) {
+    const {
+      IsAmazonFulfilled,
+      IsFreeShippingEligible,
+      IsPrimeEligible,
+    } = offers[0].DeliveryInfo;
+
+    // If any of the following conditions are true,
+    // the product will be marked as available through Amazon
+    if (IsAmazonFulfilled || IsFreeShippingEligible || IsPrimeEligible) {
+      return 'AMAZON'; // HIGH-CONV
+    } else if (
+      [IsAmazonFulfilled, IsFreeShippingEligible, IsPrimeEligible].every(
+        info => info === 'false'
+      )
+    ) {
+      // Otherwise, since an offer exists and the conditions aren't met,
+      // the product must be from a 3rd party seller
+      return 'THIRDPARTY';
+    }
+
+    return null;
+  }
+}
+
+function createVariationsTask({ asin, name, jobId }) {
+  const variationsTaskId = uuid();
+
+  variationsProducer.send(
+    [
+      {
+        id: variationsTaskId,
+        body: JSON.stringify({
           asin,
-        },
-      });
+          name,
+          jobId,
+          taskId: variationsTaskId,
+        }),
+      },
+    ],
 
-      if (!existingProduct) {
-        console.log(
-          `ERR: Product ${asin} should already exist in DB but was not found`
-        );
-        return;
-      }
+    producerError => {
+      if (producerError) console.log(producerError);
+    }
+  );
 
-      // Mark the product as not found to handle non-product responses (e.g. 404)
-      await db.products.update({
-        where: { id: existingProduct.id },
-        data: { availability: 'NOTFOUND' },
-      });
-      productCache.setProductUpdated(asin);
-
-      const tasksForProduct = asinToMessageDataMap[asin];
-
-      if (tasksForProduct.length > 0) {
-        tasksForProduct.forEach(async task => {
-          progress.productFetchCompleted({
-            jobId: task.jobId,
-            taskId: task.taskId,
-          });
-        });
-      }
-    });
-  }
+  progress.variationsFetchAdded({
+    jobId,
+    taskId: variationsTaskId,
+  });
 }
 
 module.exports = { parseProductHandler };
