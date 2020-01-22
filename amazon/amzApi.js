@@ -1,4 +1,3 @@
-const fs = require('fs');
 const ProductAdvertisingAPIv1 = require('./src/index');
 
 function createRequestFromAsins(asins) {
@@ -79,21 +78,21 @@ async function getItemsPromise(apiRequest) {
         }));
       }
 
-      // FIXME: attach error to relevant item (by ASIN) to make parsing easier
-      const errors = data.Errors // errors relating to specific products requested (as opposed to the request as a whole failing)
-        ? data.Errors.map(amazonError => {
-            const { Code: code } = amazonError;
-            const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1]; // get the ASIN from the error message
-            return {
-              asin,
-              code, // only seen `InvalidParameterValue`
-            };
-          })
+      // errors relating to specific products requested
+      const errors = data.Errors
+        ? data.Errors.map((amazonError) => {
+          const { Code: code } = amazonError;
+          const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1]; // get the ASIN from the error message
+          return {
+            asin,
+            code, // only seen `InvalidParameterValue`
+          };
+        })
         : null;
 
       if (errors) {
         errors.forEach(({ asin: errorAsin, code }) => {
-          items = items.map(item => {
+          items = items.map((item) => {
             if (item.asin === errorAsin) {
               return {
                 ...item,

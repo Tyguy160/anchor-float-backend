@@ -7,7 +7,7 @@ const {
   getVariationReq,
 } = require('./amzApi');
 
-const asins = ['B07GY2K4ND', 'B081B8MV8M', 'B07RF1XD36'];
+const asins = process.argv.slice(2);
 
 async function main() {
   const requestUrl = createRequestFromAsins(asins);
