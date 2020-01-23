@@ -42,9 +42,9 @@ function getProductStatusFromItemResponse(itemResponse) {
   const { offers, errors } = itemResponse;
 
   if (
-    errors &&
-    errors.length &&
-    errors.some(errorCode => errorCode === 'InvalidParameterValue')
+    errors
+    && errors.length
+    && errors.some(errorCode => errorCode === 'InvalidParameterValue')
   ) {
     return 'NOTFOUND';
   }
@@ -85,9 +85,9 @@ function createVariationsTask({ asin, name, jobId }) {
       },
     ],
 
-    producerError => {
+    (producerError) => {
       if (producerError) console.log(producerError);
-    }
+    },
   );
 
   progress.variationsFetchAdded({
@@ -132,9 +132,8 @@ async function parseProductHandler(messages) {
   }
 
   const { items } = apiResponse;
-
   if (items) {
-    items.forEach(async item => {
+    items.forEach(async (item) => {
       // eslint-disable-line consistent-return
       const { name, asin } = item;
 
@@ -157,7 +156,7 @@ async function parseProductHandler(messages) {
 
       const tasksForProduct = asinToMessageDataMap[asin];
       if (tasksForProduct.length > 0) {
-        tasksForProduct.forEach(async task => {
+        tasksForProduct.forEach(async (task) => {
           progress.productFetchCompleted({
             jobId: task.jobId,
             taskId: task.taskId,
@@ -170,8 +169,9 @@ async function parseProductHandler(messages) {
     });
   }
 
+  const { errors } = apiResponse;
   if (errors && errors.length) {
-    errors.forEach(async ({ asin, code }) => {
+    errors.forEach(async ({ asin }) => {
       // We are assuming code is `InvalidParameterValue`
       if (!asin) {
         return;
@@ -186,7 +186,7 @@ async function parseProductHandler(messages) {
 
       const tasksForProduct = asinToMessageDataMap[asin];
       if (tasksForProduct.length > 0) {
-        tasksForProduct.forEach(async task => {
+        tasksForProduct.forEach(async (task) => {
           progress.productFetchCompleted({
             jobId: task.jobId,
             taskId: task.taskId,

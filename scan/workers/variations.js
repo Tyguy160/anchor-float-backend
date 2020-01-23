@@ -43,7 +43,7 @@ async function parseVariationsHandler({ Body }) {
 
   if (!existingProduct) {
     console.log(
-      `ERR: Product ${asin} should already exist in DB but was not found`
+      `ERR: Product ${asin} should already exist in DB but was not found`,
     );
     return;
   }
@@ -122,7 +122,7 @@ function getProductStatusFromVariationsResponse(variationItems) {
           !IsAmazonFulfilled && !IsFreeShippingEligible && !IsPrimeEligible
         );
       });
-    }
+    },
   );
 
   if (isStatusThirdParty) {
