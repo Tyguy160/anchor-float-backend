@@ -26,7 +26,7 @@ async function parseVariationsHandler({ Body }) {
   }
 
   const { errors } = apiResponse;
-  if (errors && errors[0].Code !== 'NoResults') {
+  if (errors && errors.length && errors[0].Code !== 'NoResults') {
     console.log(`Errors in API response: ${errors}`);
     throw Error('Error in API response');
   }
@@ -71,8 +71,19 @@ function getProductStatusFromVariationsResponse(variationItems) {
     return 'UNAVAILABLE';
   }
 
-  const isStatusAmazon = variationItems.some(({ offers: variationOffers }) =>
-    variationOffers.some(({ DeliveryInfo: variationDeliveryInfo }) => {
+  const isStatusAmazon = variationItems.some(({ offers: variationOffers }) => {
+    // If offers is null, return false meaning there are no offers for that variation
+    if (!variationOffers || !(variationOffers.length > 0)) {
+      return false;
+    }
+
+    return variationOffers.some(({ DeliveryInfo: variationDeliveryInfo }) => {
+      // If there's no delivery info for the variant, return false meaning
+      // there are no available/3rd party offers for that variation
+      if (!variationDeliveryInfo) {
+        return false;
+      }
+
       const {
         IsAmazonFulfilled,
         IsFreeShippingEligible,
@@ -80,16 +91,27 @@ function getProductStatusFromVariationsResponse(variationItems) {
       } = variationDeliveryInfo;
 
       return IsAmazonFulfilled || IsFreeShippingEligible || IsPrimeEligible;
-    })
-  );
+    });
+  });
 
   if (isStatusAmazon) {
     return 'AMAZON';
   }
 
   const isStatusThirdParty = variationItems.some(
-    ({ offers: variationOffers }) =>
+    ({ offers: variationOffers }) => {
+      // If offers is null, return false meaning there are no offers for that variation
+      if (!variationOffers || !(variationOffers.length > 0)) {
+        return false;
+      }
+
       variationOffers.some(({ DeliveryInfo: variationDeliveryInfo }) => {
+        // If there's no delivery info for the variant, return false meaning
+        // there are no available/3rd party offers for that variation
+        if (!variationDeliveryInfo) {
+          return false;
+        }
+
         const {
           IsAmazonFulfilled,
           IsFreeShippingEligible,
@@ -99,7 +121,8 @@ function getProductStatusFromVariationsResponse(variationItems) {
         return (
           !IsAmazonFulfilled && !IsFreeShippingEligible && !IsPrimeEligible
         );
-      })
+      });
+    }
   );
 
   if (isStatusThirdParty) {

@@ -41,7 +41,11 @@ async function updateProductInDB({ asin, availability, name }) {
 function getProductStatusFromItemResponse(itemResponse) {
   const { offers, errors } = itemResponse;
 
-  if (errors.some(errorCode => errorCode === 'InvalidParameterValue')) {
+  if (
+    errors &&
+    errors.length &&
+    errors.some(errorCode => errorCode === 'InvalidParameterValue')
+  ) {
     return 'NOTFOUND';
   }
 
@@ -57,7 +61,8 @@ function getProductStatusFromItemResponse(itemResponse) {
 
   if (IsAmazonFulfilled || IsFreeShippingEligible || IsPrimeEligible) {
     return 'AMAZON';
-  } if (!IsAmazonFulfilled && !IsFreeShippingEligible && !IsPrimeEligible) {
+  }
+  if (!IsAmazonFulfilled && !IsFreeShippingEligible && !IsPrimeEligible) {
     return 'THIRDPARTY';
   }
 
@@ -80,9 +85,9 @@ function createVariationsTask({ asin, name, jobId }) {
       },
     ],
 
-    (producerError) => {
+    producerError => {
       if (producerError) console.log(producerError);
-    },
+    }
   );
 
   progress.variationsFetchAdded({
@@ -129,7 +134,8 @@ async function parseProductHandler(messages) {
   const { items } = apiResponse;
 
   if (items) {
-    items.forEach(async (item) => { // eslint-disable-line consistent-return
+    items.forEach(async item => {
+      // eslint-disable-line consistent-return
       const { name, asin } = item;
 
       const productStatus = getProductStatusFromItemResponse(item);
@@ -151,7 +157,36 @@ async function parseProductHandler(messages) {
 
       const tasksForProduct = asinToMessageDataMap[asin];
       if (tasksForProduct.length > 0) {
-        tasksForProduct.forEach(async (task) => {
+        tasksForProduct.forEach(async task => {
+          progress.productFetchCompleted({
+            jobId: task.jobId,
+            taskId: task.taskId,
+          });
+        });
+      }
+
+      productCache.setProductUpdated(asin);
+      productCache.deleteProductQueued(asin);
+    });
+  }
+
+  if (errors && errors.length) {
+    errors.forEach(async ({ asin, code }) => {
+      // We are assuming code is `InvalidParameterValue`
+      if (!asin) {
+        return;
+      }
+
+      try {
+        await updateProductInDB({ asin, availability: 'NOTFOUND', name: null });
+      } catch (error) {
+        console.log('Error trying to update DB');
+        console.log(error);
+      }
+
+      const tasksForProduct = asinToMessageDataMap[asin];
+      if (tasksForProduct.length > 0) {
+        tasksForProduct.forEach(async task => {
           progress.productFetchCompleted({
             jobId: task.jobId,
             taskId: task.taskId,

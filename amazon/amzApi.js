@@ -80,19 +80,19 @@ async function getItemsPromise(apiRequest) {
 
       // errors relating to specific products requested
       const errors = data.Errors
-        ? data.Errors.map((amazonError) => {
-          const { Code: code } = amazonError;
-          const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1]; // get the ASIN from the error message
-          return {
-            asin,
-            code, // only seen `InvalidParameterValue`
-          };
-        })
+        ? data.Errors.map(amazonError => {
+            const { Code: code } = amazonError;
+            const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1]; // get the ASIN from the error message
+            return {
+              asin,
+              code, // only seen `InvalidParameterValue`
+            };
+          })
         : null;
 
-      if (errors) {
+      if (errors && items && items.length) {
         errors.forEach(({ asin: errorAsin, code }) => {
-          items = items.map((item) => {
+          items = items.map(item => {
             if (item.asin === errorAsin) {
               return {
                 ...item,
