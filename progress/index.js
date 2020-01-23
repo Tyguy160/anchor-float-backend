@@ -97,7 +97,7 @@ progMan.on(FULL_SITE_COMPLETED, ({ jobId }) => {
     const { userId, hostname } = metaInfo;
 
     console.log(
-      `Site complete.\nAdding report generation job for: ${hostname}\nUser: ${userId}\n`
+      `Site complete.\nAdding report generation job for: ${hostname}\nUser: ${userId}\n`,
     );
 
     const taskId = uuid();
@@ -114,9 +114,9 @@ progMan.on(FULL_SITE_COMPLETED, ({ jobId }) => {
           }),
         },
       ],
-      producerError => {
+      (producerError) => {
         if (producerError) console.log(producerError);
-      }
+      },
     );
   });
 });
@@ -125,13 +125,13 @@ progMan.on(FULL_SITE_COMPLETED, ({ jobId }) => {
 progMan.on(SITEMAP_PARSE_STARTED, ({ jobId, userId, hostname }) => {
   if (!userId) {
     console.log(
-      'ERROR: No userId on sitemap job. No progress tracking will occur.'
+      'ERROR: No userId on sitemap job. No progress tracking will occur.',
     );
     return;
   }
 
   console.log(
-    `Sitemap starting for jobId: ${jobId}\nuserId: ${userId}\nhostname: ${hostname}\n`
+    `Sitemap starting for jobId: ${jobId}\nuserId: ${userId}\nhostname: ${hostname}\n`,
   );
 
   const metaKey = `${jobId}:meta`;
@@ -178,7 +178,7 @@ progMan.on(PAGE_PARSE_COMPLETED, ({ jobId, taskId }) => {
               pagesComplete: 'true',
             });
           }
-        }
+        },
       );
     }
   });
@@ -216,15 +216,15 @@ progMan.on(PRODUCT_CONNECT_COMPLETED, ({ jobId, taskId }) => {
               (errFromOtherHget, isProductFetchingComplete) => {
                 if (isProductFetchingComplete) {
                   redisClient.hexists(
-                    metakey,
+                    metaKey,
                     'variationsComplete',
-                    (errFromVariationsHget, variationsComplete) => {
+                    () => {
                       console.log(`FULL SITE COMPLETE (connections): ${jobId}`);
                       progMan.emit(FULL_SITE_COMPLETED, { jobId });
-                    }
+                    },
                   );
                 }
-              }
+              },
             );
 
             // Check if no products were added to fetch (recently updated)
@@ -234,14 +234,14 @@ progMan.on(PRODUCT_CONNECT_COMPLETED, ({ jobId, taskId }) => {
               (errFromScard, productsRemainingCount) => {
                 if (productsRemainingCount === 0) {
                   console.log(
-                    `FULL SITE COMPLETE (no products fetched): ${jobId}`
+                    `FULL SITE COMPLETE (no products fetched): ${jobId}`,
                   );
                   progMan.emit(FULL_SITE_COMPLETED, { jobId });
                 }
-              }
+              },
             );
           }
-        }
+        },
       );
     }
   });
@@ -280,10 +280,10 @@ progMan.on(PRODUCT_FETCH_COMPLETED, ({ jobId, taskId }) => {
                   console.log(`FULL SITE COMPLETE (products): ${jobId}`);
                   progMan.emit(FULL_SITE_COMPLETED, { jobId });
                 }
-              }
+              },
             );
           }
-        }
+        },
       );
     }
   });
@@ -322,10 +322,10 @@ progMan.on(VARIATIONS_FETCH_COMPLETED, ({ jobId, taskId }) => {
                   console.log(`FULL SITE COMPLETE (variations): ${jobId}`);
                   progMan.emit(FULL_SITE_COMPLETED, { jobId });
                 }
-              }
+              },
             );
           }
-        }
+        },
       );
     }
   });
