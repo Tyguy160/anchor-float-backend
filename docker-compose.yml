@@ -11,10 +11,10 @@ services:
     ports:
       - '4000:4000' # Enable access to graphql server from host machine
     volumes:
-      - /opt/app/node_modules # Use node_modules inside the container
-      - ./package.json:/opt/app/package.json
-      - ./api:/opt/app/api # Mount local `api` source code
-      - ./prisma:/opt/app/prisma
+      - /home/node/app/node_modules # Use node_modules inside the container
+      - ./package.json:/home/node/app/package.json
+      - ./api:/home/node/app/api # Mount local `api` source code
+      - ./prisma:/home/node/app/prisma
     command: npm run dev # Defined in backend package.json
   scan:
     build:
@@ -25,11 +25,11 @@ services:
       - redis
     restart: unless-stopped
     volumes:
-      - /opt/app/node_modules # Use node_modules inside the container
-      - ./package.json:/opt/app/package.json
-      - ./scan:/opt/app/scan # Mount local `scan` source code
-      - ./amazon:/opt/app/amazon # Mount the amazon api files locally
-      - ./prisma:/opt/app/prisma
+      - /home/node/app/node_modules # Use node_modules inside the container
+      - ./package.json:/home/node/app/package.json
+      - ./scan:/home/node/app/scan # Mount local `scan` source code
+      - ./amazon:/home/node/app/amazon # Mount the amazon api files locally
+      - ./prisma:/home/node/app/prisma
     command: npm run devscan # Defined in backend package.json
   report:
     build:
@@ -40,11 +40,11 @@ services:
       - redis
     restart: unless-stopped
     volumes:
-      - /opt/app/node_modules # Use node_modules inside the container
-      - ./package.json:/opt/app/package.json
-      - ./report:/opt/app/report # Mount local `report` source code
-      - ./prisma:/opt/app/prisma
-      - ./report/exports:/opt/app/report/exports
+      - /home/node/app/node_modules # Use node_modules inside the container
+      - ./package.json:/home/node/app/package.json
+      - ./report:/home/node/app/report # Mount local `report` source code
+      - ./prisma:/home/node/app/prisma
+      - ./report/exports:/home/node/app/report/exports
     command: npm run devreport # Defined in backend package.json
   database:
     image: postgres

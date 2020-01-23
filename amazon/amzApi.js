@@ -11,9 +11,6 @@ function createRequestFromAsins(asins) {
   configuredRequest.Condition = 'New';
 
   configuredRequest.Resources = [
-    'CustomerReviews.Count',
-    'CustomerReviews.StarRating',
-    'Images.Primary.Medium',
     'ItemInfo.Title',
     'Offers.Listings.Availability.Message',
     'Offers.Listings.Availability.Type',
@@ -21,8 +18,6 @@ function createRequestFromAsins(asins) {
     'Offers.Listings.DeliveryInfo.IsAmazonFulfilled',
     'Offers.Listings.DeliveryInfo.IsFreeShippingEligible',
     'Offers.Listings.DeliveryInfo.IsPrimeEligible',
-    'Offers.Listings.IsBuyBoxWinner',
-    'Offers.Listings.Price',
     'Offers.Summaries.OfferCount',
     'ParentASIN',
   ];
@@ -36,14 +31,11 @@ function createVariationsRequestFromAsin(asin) {
   configuredRequest.PartnerTag = process.env.AMAZON_ASSOCIATES_PARTNER_TAG;
   configuredRequest.PartnerType = 'Associates';
 
-  configuredRequest.ASIN = asin; // Items to request as an array of ASINs
+  configuredRequest.ASIN = asin; // Single ASIN to request
 
   configuredRequest.Condition = 'New';
 
   configuredRequest.Resources = [
-    'CustomerReviews.Count',
-    'CustomerReviews.StarRating',
-    'Images.Primary.Medium',
     'ItemInfo.Title',
     'Offers.Listings.Availability.Message',
     'Offers.Listings.Availability.Type',
@@ -51,8 +43,6 @@ function createVariationsRequestFromAsin(asin) {
     'Offers.Listings.DeliveryInfo.IsAmazonFulfilled',
     'Offers.Listings.DeliveryInfo.IsFreeShippingEligible',
     'Offers.Listings.DeliveryInfo.IsPrimeEligible',
-    'Offers.Listings.IsBuyBoxWinner',
-    'Offers.Listings.Price',
     'Offers.Summaries.OfferCount',
     'ParentASIN',
   ];
@@ -84,19 +74,36 @@ async function getItemsPromise(apiRequest) {
           name: item.ItemInfo.Title.DisplayValue,
           offers: item.Offers ? item.Offers.Listings : null,
           parentAsin: item.ParentASIN ? item.ParentASIN : null,
+          errors: [],
         }));
       }
 
+      // errors relating to specific products requested
       const errors = data.Errors
-        ? data.Errors.map((amazonError) => {
-          const { Code: code } = amazonError;
-          const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1];
-          return {
-            asin,
-            code,
-          };
-        })
+        ? data.Errors.map(amazonError => {
+            const { Code: code } = amazonError;
+            const asin = amazonError.Message.match(/ItemId\s(\S+)/)[1]; // get the ASIN from the error message
+            return {
+              asin,
+              code, // only seen `InvalidParameterValue`
+            };
+          })
         : null;
+
+      if (errors && items && items.length) {
+        errors.forEach(({ asin: errorAsin, code }) => {
+          items = items.map(item => {
+            if (item.asin === errorAsin) {
+              return {
+                ...item,
+                errors: item.errors.concat(code),
+              };
+            }
+
+            return item;
+          });
+        });
+      }
 
       return resolve({ items, errors });
     });
@@ -119,6 +126,7 @@ async function getVariationReq(apiRequest) {
         // Usually a 429 error (too many requests)
         return reject(error);
       }
+
       let items = null;
       if (data.VariationsResult && data.VariationsResult.Items) {
         items = data.VariationsResult.Items.map(item => ({
@@ -130,8 +138,6 @@ async function getVariationReq(apiRequest) {
       }
 
       if (data.Errors && data.Errors[0].Code === 'NoResults') {
-        console.log('Variation errors:');
-        console.log(data.Errors);
         return resolve({ items, errors: data.Errors });
       }
 

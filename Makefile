@@ -6,6 +6,22 @@ prod-up:
 	docker-compose -f docker-compose.prod.yml up --build -d
 prod-down:
 	docker-compose -f docker-compose.prod.yml down -v
+prod-purge-sqs:
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/parse-sitemap
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/parse-page
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/parse-shortlink
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/parse-product
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/parse-variations
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/generate-report
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/create-connect-product
+dev-purge-sqs:
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/parse-sitemap-dev
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/parse-page-dev
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/parse-shortlink-dev
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/parse-product-dev
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/parse-variations-dev
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/generate-report-dev
+	aws sqs purge-queue --queue-url https://sqs.us-east-1.amazonaws.com/510755279176/create-connect-product-dev
 redis-connect:
 	docker run -it --network="host" --rm redis redis-cli
 docker-clean:
