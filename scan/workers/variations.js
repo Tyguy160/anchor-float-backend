@@ -45,7 +45,11 @@ async function parseVariationsHandler({ Body }) {
     console.log(
       `ERR: Product ${asin} should already exist in DB but was not found`,
     );
-    return;
+
+    return progress.variationsFetchCompleted({
+      jobId,
+      taskId,
+    });
   }
 
   await db.products.update({

@@ -133,18 +133,29 @@ async function parseProductHandler(messages) {
 
   const { items } = apiResponse;
   if (items) {
-    items.forEach(async (item) => {
-      // eslint-disable-line consistent-return
+    items.forEach(async (item) => { // eslint-disable-line consistent-return
       const { name, asin } = item;
 
       const productStatus = getProductStatusFromItemResponse(item);
       if (!productStatus) {
-        return createVariationsTask({
+        createVariationsTask({
           asin,
           name,
-          // FIXME: we be updating other jobs and not assuming there's only one jobId
+          // FIXME: same asin on different Jobs could cause issues
           jobId: asinToMessageDataMap[asin][0].jobId,
         });
+
+        const tasksForProduct = asinToMessageDataMap[asin];
+        if (tasksForProduct.length > 0) {
+          tasksForProduct.forEach(async (task) => {
+            progress.productFetchCompleted({
+              jobId: task.jobId,
+              taskId: task.taskId,
+            });
+          });
+        }
+
+        return;
       }
 
       try {
