@@ -62,7 +62,7 @@ async function parsePageHandler({ Body }) {
           },
         },
       },
-      () => console.log('upserted page')
+      () => console.log('upserted page'),
     )
     .catch(console.log);
 
@@ -78,11 +78,11 @@ async function parsePageHandler({ Body }) {
   await db.links.deleteMany(
     { where: { page: { id: newOrExistingPage.id } } },
     '{ count }',
-    () => console.log('deleted links')
+    () => console.log('deleted links'),
   );
 
   const { pageTitle, links, wordCount } = await parseMarkup(response.data);
-  const parsedLinks = links.map(link => {
+  const parsedLinks = links.map((link) => {
     const parsedHref = parseHref(link.href, url.origin);
     return { ...link, parsedHref };
   });
@@ -97,8 +97,7 @@ async function parsePageHandler({ Body }) {
     },
   });
 
-  for (const link of parsedLinks) {
-    // eslint-disable-line
+  for (const link of parsedLinks) { // eslint-disable-line
     await processLink(link, newOrExistingPage); // eslint-disable-line
   }
 
@@ -106,7 +105,9 @@ async function parsePageHandler({ Body }) {
 
   async function processLink(link, page) {
     try {
-      const { isValid, params, hostname, pathname } = link.parsedHref;
+      const {
+        isValid, params, hostname, pathname,
+      } = link.parsedHref;
       // Doesn't do anything with invalid links
       if (isValid) {
         let affiliateTagged = null;
@@ -140,7 +141,7 @@ async function parsePageHandler({ Body }) {
           ]; // eslint-disable-line no-useless-escape
 
           let captureGroup;
-          const hasAsin = asinRegexs.some(regex => {
+          const hasAsin = asinRegexs.some((regex) => {
             captureGroup = pathname.match(regex);
             return captureGroup;
           });
@@ -161,9 +162,9 @@ async function parsePageHandler({ Body }) {
                   }),
                 },
               ],
-              err => {
+              (err) => {
                 if (err) console.log(err);
-              }
+              },
             );
 
             progress.productConnectAdded({
