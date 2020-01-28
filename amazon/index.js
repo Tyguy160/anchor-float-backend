@@ -25,9 +25,8 @@ async function main() {
   let varRes;
   try {
     varRes = await getVariationReq(variationReq);
-    const { items } = varRes;
     console.log('getVariations results:');
-    console.log(JSON.stringify(items, null, 1));
+    console.log(JSON.stringify(varRes, null, 1));
   } catch (err) {
     console.log(`getVariations Errors:\n${err}`);
   }
