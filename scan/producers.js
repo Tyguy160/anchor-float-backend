@@ -11,6 +11,11 @@ const pageProducer = Producer.create({
   region: process.env.AWS_REGION,
 });
 
+const shortlinkProducer = Producer.create({
+  queueUrl: process.env.PARSE_SHORTLINK_QUEUE_URL,
+  region: process.env.AWS_REGION,
+});
+
 const createAndConnectProducer = Producer.create({
   queueUrl: process.env.CREATE_CONNECT_PRODUCT_QUEUE_URL,
   region: process.env.AWS_REGION,
@@ -28,6 +33,7 @@ const variationsProducer = Producer.create({
 
 module.exports = {
   sitemapProducer,
+  shortlinkProducer,
   pageProducer,
   createAndConnectProducer,
   productProducer,
