@@ -1,9 +1,12 @@
 const axios = require('axios');
 const uuid = require('uuid/v4');
 const { getDB } = require('../../prisma/db');
-const { getDataFromMessage } = require('./utils');
+const { getDataFromMessage, extractAsinFromUrl } = require('./utils');
 const { parseMarkup, parseHref } = require('../parsers');
-const { createAndConnectProducer } = require('../producers');
+const {
+  shortlinkProducer,
+  createAndConnectProducer,
+} = require('../producers');
 const progress = require('../../progress/index');
 
 const db = getDB();
@@ -62,7 +65,7 @@ async function parsePageHandler({ Body }) {
           },
         },
       },
-      () => console.log('upserted page')
+      () => console.log('upserted page'),
     )
     .catch(console.log);
 
@@ -78,11 +81,11 @@ async function parsePageHandler({ Body }) {
   await db.links.deleteMany(
     { where: { page: { id: newOrExistingPage.id } } },
     '{ count }',
-    () => console.log('deleted links')
+    () => console.log('deleted links'),
   );
 
   const { pageTitle, links, wordCount } = await parseMarkup(response.data);
-  const parsedLinks = links.map(link => {
+  const parsedLinks = links.map((link) => {
     const parsedHref = parseHref(link.href, url.origin);
     return { ...link, parsedHref };
   });
@@ -97,8 +100,7 @@ async function parsePageHandler({ Body }) {
     },
   });
 
-  for (const link of parsedLinks) {
-    // eslint-disable-line
+  for (const link of parsedLinks) { // eslint-disable-line
     await processLink(link, newOrExistingPage); // eslint-disable-line
   }
 
@@ -106,16 +108,14 @@ async function parsePageHandler({ Body }) {
 
   async function processLink(link, page) {
     try {
-      const { isValid, params, hostname, pathname } = link.parsedHref;
+      const {
+        isValid, params, hostname,
+      } = link.parsedHref;
+
       // Doesn't do anything with invalid links
       if (isValid) {
         let affiliateTagged = null;
         let affiliateTagName = null;
-
-        // Handle amzn.to links
-        if (hostname.includes('amzn.to')) {
-          console.log('Shortlink found, no action taken');
-        }
 
         // Handle amazon.com affiliate tagged links
         if (hostname.includes('amazon.com') && params.has('tag')) {
@@ -133,20 +133,34 @@ async function parsePageHandler({ Body }) {
           },
         });
 
+        // Handle amzn.to links
+        if (hostname.includes('amzn.to')) {
+          console.log('Shortlink found - adding to shortlink queue');
+
+          const shortlinkTaskId = uuid();
+          shortlinkProducer.send(
+            [
+              {
+                id: shortlinkTaskId,
+                body: JSON.stringify({
+                  linkId: newLink.id,
+                  shortUrl: link.href, // kind of cheeky but want to save a DB lookup
+                  jobId,
+                  taskId: shortlinkTaskId,
+                }),
+              },
+            ],
+            (err) => {
+              if (err) console.log(err);
+            },
+          );
+        }
+
+        // Handle standard amazon links
         if (hostname.includes('amazon.com')) {
-          const asinRegexs = [
-            /\/dp\/([^\?#\/]+)/i,
-            /\/gp\/product\/([^\?#\/]+)/i,
-          ]; // eslint-disable-line no-useless-escape
+          const asin = extractAsinFromUrl(link.href);
 
-          let captureGroup;
-          const hasAsin = asinRegexs.some(regex => {
-            captureGroup = pathname.match(regex);
-            return captureGroup;
-          });
-
-          if (hasAsin) {
-            const asin = captureGroup[1];
+          if (asin) {
             const createAndConnectTaskId = uuid();
 
             createAndConnectProducer.send(
@@ -161,9 +175,9 @@ async function parsePageHandler({ Body }) {
                   }),
                 },
               ],
-              err => {
+              (err) => {
                 if (err) console.log(err);
-              }
+              },
             );
 
             progress.productConnectAdded({
