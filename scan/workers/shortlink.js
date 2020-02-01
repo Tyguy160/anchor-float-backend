@@ -1,13 +1,36 @@
 
 const uuid = require('uuid/v4');
+const axios = require('axios');
 
 const { createAndConnectProducer } = require('../producers');
 const { getDataFromMessage, extractAsinFromUrl } = require('./utils');
 const progress = require('../../progress/index');
 
-function unwrapUrl(shortUrl) { // FIXME
-  const longUrl = `${shortUrl}#`;
-  return longUrl;
+async function unwrapUrl(shortUrl) { // FIXME
+  const url = new URL(shortUrl);
+
+  const { status, headers } = await axios
+    .head(url.href, { maxRedirects: 0 })
+    .catch((err) => {
+      if (err.response.status) {
+        return err.response;
+      }
+
+      return null;
+    });
+
+  if (status && status < 300) {
+    return { err: 'Response was not a redirect', data: null };
+  }
+
+  if (headers && headers.location) {
+    return {
+      err: null,
+      data: headers.location,
+    };
+  }
+
+  return { err: 'Location headers not present in redirect', data: null };
 }
 
 async function parseShortlinkHandler({ Body }) {
@@ -31,12 +54,24 @@ async function parseShortlinkHandler({ Body }) {
     return;
   }
 
-  const fullUrl = unwrapUrl(url.href); // FIXME
+  if (!url.hostname.includes('amzn.to')) {
+    console.log(`Not an Amazon shortlink: ${url.href}`);
+    return;
+  }
 
-  const asin = extractAsinFromUrl(fullUrl);
+  const { err, data: unwrappedUrl } = await unwrapUrl(url.href);
+
+  if (err || !unwrappedUrl) {
+    console.log('Err finding redirect. Returning.');
+    console.log({ err, unwrappedUrl });
+    return;
+  }
+
+  const asin = extractAsinFromUrl(unwrappedUrl);
 
   if (asin) {
     const createAndConnectTaskId = uuid();
+    console.log(`Creating createAndConnect job for ${asin}`);
 
     createAndConnectProducer.send(
       [
@@ -50,8 +85,8 @@ async function parseShortlinkHandler({ Body }) {
           }),
         },
       ],
-      (err) => {
-        if (err) console.log(err);
+      (producerError) => {
+        if (producerError) console.log(producerError);
       },
     );
 
