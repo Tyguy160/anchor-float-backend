@@ -5,8 +5,9 @@ const axios = require('axios');
 const { createAndConnectProducer } = require('../producers');
 const { getDataFromMessage, extractAsinFromUrl } = require('./utils');
 const progress = require('../../progress/index');
+const productCache = require('../productCache');
 
-async function unwrapUrl(shortUrl) { // FIXME
+async function unwrapUrl(shortUrl) {
   const url = new URL(shortUrl);
 
   const { status, headers } = await axios
@@ -59,7 +60,24 @@ async function parseShortlinkHandler({ Body }) {
     return;
   }
 
-  const { err, data: unwrappedUrl } = await unwrapUrl(url.href);
+
+  let unwrappedUrl;
+  let err;
+
+  const cachedUrl = await productCache.getShortlinkResolved(url.href);
+  if (cachedUrl) {
+    unwrappedUrl = cachedUrl;
+  } else {
+    const res = await unwrapUrl(url.href);
+
+    unwrappedUrl = res.data;
+    err = res.err; // eslint-disable-line prefer-destructuring
+
+    if (!err) {
+      productCache.setShortlinkResolved(url.href, unwrappedUrl);
+    }
+  }
+
 
   if (err || !unwrappedUrl) {
     console.log('Err finding redirect. Returning.');
