@@ -75,10 +75,32 @@ function deleteProductQueued(asin) {
   redisClient.del(key);
 }
 
+const SHORTLINK_SALT = 'shortlink:';
+
+function setShortlinkResolved(shortUrl, resolvedUrl) {
+  const key = SHORTLINK_SALT + shortUrl;
+
+  redisClient.set(key, resolvedUrl);
+}
+
+async function getShortlinkResolved(shortUrl) {
+  const key = SHORTLINK_SALT + shortUrl;
+
+  const value = await getAsync(key);
+
+  if (!value) {
+    return null;
+  }
+
+  return value;
+}
+
 module.exports = {
   isRecentlyUpdated,
   setProductUpdated,
   setProductQueued,
   isAlreadyQueued,
   deleteProductQueued,
+  setShortlinkResolved,
+  getShortlinkResolved,
 };
